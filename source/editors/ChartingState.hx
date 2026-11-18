@@ -195,23 +195,27 @@ class ChartingState extends MusicBeatState
 		DiscordClient.changePresence("Chart Editor", StringTools.replace(PlayState.SONG.song, '-', ' '));
 		#end
 
-			if(Lib.application.window.width == 800 && Lib.application.window.height == 600){
+		#if linux
+		// PlayState restores Paranoia's original window before entering the editor.
+		if (PlayState.curStage != 'virtual')
+		#end
+		{
+			if (Lib.application.window.width == 800 && Lib.application.window.height == 600) {
 				Lib.application.window.move(Lib.application.window.x - 240, Lib.application.window.y - 60);
 				Lib.application.window.resize(1280, 720);
 			}
-			else if(Lib.application.window.width == 512 && Lib.application.window.height == 768)
-			{
+			else if (Lib.application.window.width == 512 && Lib.application.window.height == 768) {
 				Lib.application.window.resize(1280, 720);
 				Lib.application.window.move(PlayState.ogwinX, PlayState.ogwinY);
 			}
 
-			Lib.current.scaleX = 1;
-			Lib.current.scaleY = 1;
-
-			if(PlayState.curStage == 'virtual'){
+			if (PlayState.curStage == 'virtual') {
 				Lib.application.window.resize(1280, 720);
 				#if windows CppAPI.setWallpaper('old'); #end
 			}
+		}
+		Lib.current.scaleX = 1;
+		Lib.current.scaleY = 1;
 
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.scrollFactor.set();

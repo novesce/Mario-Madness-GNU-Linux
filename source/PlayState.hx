@@ -244,6 +244,14 @@ class PlayState extends MusicBeatState
 	// MONITOR RESOLUTION
 	var fsX:Int = 1920;
 	var fsY:Int = 1080;
+	var displayX:Int = 0;
+	var displayY:Int = 0;
+	#if linux
+	var originalVirtualWindow:Null<{
+		fullscreen:Bool, maximized:Bool, resizable:Bool, borderless:Bool
+	}>;
+	var hasVirtualWindowedBounds:Bool = false;
+	#end
 
 	var cantfade:Bool = false;
 	var cantchange:Bool = false;
@@ -2370,6 +2378,9 @@ class PlayState extends MusicBeatState
 				addCharacterToList('vDialog2', 1);
 				addCharacterToList('vGF2', 1);
 
+				#if linux
+				if (ClientPrefs.noVirtual) prepareVirtualWindow();
+				#else
 				Lib.application.window.fullscreen = true;
 				fsX = Lib.application.window.width;
 				fsY = Lib.application.window.height;
@@ -2387,6 +2398,7 @@ class PlayState extends MusicBeatState
 				PauseSubState.restsizeY = Lib.application.window.height;
 				PauseSubState.restX = Lib.application.window.x;
 				PauseSubState.restY = Lib.application.window.y;
+				#end
 
 				effect = new SMWPixelBlurShader();
 				dupe = new CamDupeShader();
@@ -2409,8 +2421,13 @@ class PlayState extends MusicBeatState
 				yourhead.scrollFactor.set();
 				add(yourhead);
 
+				#if linux
+				virtuabg = new FlxSprite().loadGraphic(Paths.image('toolate'));
+				virtuabg.screenCenter();
+				#else
 				virtuabg = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, 0xFF571900);
 				virtuabg.setGraphicSize(Std.int(virtuabg.width * 10));
+				#end
 				virtuabg.scrollFactor.set(0, 0);
 				virtuabg.alpha = 0;
 				add(virtuabg);
@@ -6604,6 +6621,16 @@ class PlayState extends MusicBeatState
 	{
 		startingSong = false;
 
+		#if linux
+		if (originalVirtualWindow != null && !hasVirtualWindowedBounds)
+		{
+			// The window manager has now finished leaving fullscreen or maximized mode.
+			captureVirtualWindowBounds();
+			Lib.application.window.resizable = false;
+			hasVirtualWindowedBounds = true;
+		}
+		#end
+
 		previousFrameTime = FlxG.game.ticks;
 		lastReportedPlayheadPosition = 0;
 
@@ -7627,6 +7654,15 @@ class PlayState extends MusicBeatState
 			Lib.application.window.resize(resizex, resizey);
 			Lib.application.window.move(winx, winy);
 		}
+
+		#if linux
+		if (virtuabg != null && virtuabg.alpha > 0)
+		{
+			// Keep the wallpaper centered and covering the viewport as the camera zooms.
+			var cover = Math.max(camGame.viewWidth / virtuabg.frameWidth, camGame.viewHeight / virtuabg.frameHeight);
+			virtuabg.scale.set(cover, cover);
+		}
+		#end
 
 		if (PlayState.SONG.song == 'Oh God No')
 		{
@@ -8836,6 +8872,16 @@ class PlayState extends MusicBeatState
 			var ret:Dynamic = callOnLuas('onGameOver', []);
 			if (ret != FunkinLua.Function_Stop)
 			{
+				#if linux
+				LinuxWallpaper.restore();
+				if (originalVirtualWindow != null)
+				{
+					startwindow = startresize = false;
+					for (tween in windowTween) tween.cancel();
+					windowTween = [];
+					restoreVirtualWindow();
+				}
+				#end
 				boyfriend.stunned = true;
 				gf.stunned = true;
 				deathCounter++;
@@ -13606,6 +13652,10 @@ class PlayState extends MusicBeatState
 					case 2:
 						if (ClientPrefs.noVirtual)
 						{
+							#if linux
+							LinuxWallpaper.apply(Paths.getPreloadPath('images/toolate.png'));
+							virtuabg.alpha = 1;
+							#end
 							eventTimers.push(new FlxTimer().start(0.05, function(tmr:FlxTimer)
 							{
 								iconP1.changeIcon('icon-bfvsad');
@@ -13646,6 +13696,9 @@ class PlayState extends MusicBeatState
 						
 
 					case 4:
+						#if linux
+						LinuxWallpaper.restore();
+						#end
 						if (ClientPrefs.noVirtual)
 						{
 							for (tween in extraTween)
@@ -13654,7 +13707,11 @@ class PlayState extends MusicBeatState
 								}
 							#if windows CppAPI.restoreWindows(); #end
 							startresize = true;
+							#if linux
+							if (originalVirtualWindow != null) Lib.application.window.borderless = originalVirtualWindow.borderless;
+							#else
 							Lib.application.window.borderless = false;
+							#end
 
 							if (!ClientPrefs.hideTime)
 							{
@@ -13673,8 +13730,12 @@ class PlayState extends MusicBeatState
 								onComplete: function(twn:FlxTween)
 								{
 									startresize = false;
+									#if linux
+									restoreVirtualWindow();
+									#else
 									Lib.application.window.resize(resizex, resizey);
 									Lib.application.window.move(winx, winy);
+									#end
 								}
 							}));
 							virtuabg.alpha = 0;
@@ -15739,6 +15800,58 @@ class PlayState extends MusicBeatState
 		grpNoteSplashes.add(splash);
 	}
 
+	#if linux
+	function captureVirtualWindowBounds():Void
+	{
+		var window = Lib.application.window;
+		winx = changex = ogwinX = window.x;
+		winy = changey = ogwinY = window.y;
+		resizex = ogwinsizeX = window.width;
+		resizey = ogwinsizeY = window.height;
+	}
+
+	function prepareVirtualWindow():Void
+	{
+		var window = Lib.application.window;
+		originalVirtualWindow = {
+			fullscreen: window.fullscreen, maximized: window.maximized,
+			resizable: window.resizable, borderless: window.borderless
+		};
+		captureVirtualWindowBounds();
+		var display = window.display;
+		if (display != null)
+		{
+			displayX = Std.int(display.bounds.x);
+			displayY = Std.int(display.bounds.y);
+			fsX = Std.int(display.bounds.width);
+			fsY = Std.int(display.bounds.height);
+		}
+		hasVirtualWindowedBounds = !window.fullscreen && !window.maximized;
+		if (hasVirtualWindowedBounds) window.resizable = false;
+		if (window.fullscreen) window.fullscreen = false;
+		if (window.maximized) window.maximized = false;
+	}
+
+	function restoreVirtualWindow():Void
+	{
+		if (originalVirtualWindow == null) return;
+		var window = Lib.application.window;
+		var original = originalVirtualWindow;
+		if (window.fullscreen) window.fullscreen = false;
+		if (window.maximized) window.maximized = false;
+		window.borderless = original.borderless;
+		window.resizable = original.resizable;
+		if (hasVirtualWindowedBounds)
+		{
+			window.resize(ogwinsizeX, ogwinsizeY);
+			window.move(ogwinX, ogwinY);
+		}
+		if (original.maximized) window.maximized = true;
+		if (original.fullscreen) window.fullscreen = true;
+		originalVirtualWindow = null;
+	}
+	#end
+
 	public static function onWinClose()
 	{
 		trace('BUT UN C PAPU MISTERIOSO CIERRA EL JUEGO');
@@ -15749,6 +15862,8 @@ class PlayState extends MusicBeatState
 			CppAPI.restoreWindows();
 			CppAPI.setWallpaper('old');
 		}
+		#elseif linux
+		LinuxWallpaper.restore();
 		#end
 	}
 
@@ -15756,6 +15871,9 @@ class PlayState extends MusicBeatState
 
 	override function destroy()
 	{
+		#if linux
+		LinuxWallpaper.restore();
+		#end
 		preventLuaRemove = true;
 		for (i in 0...luaArray.length)
 		{
@@ -15764,6 +15882,11 @@ class PlayState extends MusicBeatState
 		}
 		luaArray = [];
 		super.destroy();
+			#if linux
+			if (curStage == 'virtual')
+				restoreVirtualWindow();
+			else
+			#end
 			if (Lib.application.window.width == 800 && Lib.application.window.height == 600)
 			{
 				Lib.application.window.move(Lib.application.window.x - 240, Lib.application.window.y - 60);
@@ -15781,6 +15904,7 @@ class PlayState extends MusicBeatState
 				Lib.application.window.fullscreen = false;
 				Lib.application.window.maximized = false;
 			}
+			#if !linux
 			if (PlayState.curStage == 'virtual')
 			{
 				Lib.application.window.resizable = true;
@@ -15794,6 +15918,7 @@ class PlayState extends MusicBeatState
 				CppAPI.setWallpaper('old');
 				#end
 			}
+			#end
 
 			FlxG.mouse.load(TitleState.mouse.pixels, 2);
 
@@ -15839,6 +15964,8 @@ class PlayState extends MusicBeatState
 
 		if (curStage == 'virtual' && ClientPrefs.noVirtual)
 		{
+			var relativeX = changex - displayX;
+			var relativeY = changey - displayY;
 			switch (curStep)
 			{
 				case 320:
@@ -15854,18 +15981,18 @@ class PlayState extends MusicBeatState
 				case 332:
 					winx = changex + 100;
 					winy = changey - 100;
-					windowTween.push(FlxTween.tween(this, {winx: changex / 4, winy: Std.int(changey / 4)}, 0.2, {startDelay: 0.2, ease: FlxEase.backIn}));
+					windowTween.push(FlxTween.tween(this, {winx: displayX + relativeX / 4, winy: displayY + Std.int(relativeY / 4)}, 0.2, {startDelay: 0.2, ease: FlxEase.backIn}));
 
 				case 336:
 					for (tween in windowTween)
 					{
 						tween.cancel();
 					}
-					winx = Std.int(changex / 4);
-					winy = Std.int(changey / 4);
+					winx = displayX + Std.int(relativeX / 4);
+					winy = displayY + Std.int(relativeY / 4);
 
-					windowTween.push(FlxTween.tween(this, {winy: Std.int(changey + (changex / 4))}, 3, {ease: FlxEase.quadInOut, type: PINGPONG}));
-					windowTween.push(FlxTween.tween(this, {winx: Std.int(changex + (changex / 2))}, 5, {ease: FlxEase.quadInOut, type: PINGPONG}));
+					windowTween.push(FlxTween.tween(this, {winy: displayY + Std.int(relativeY + relativeX / 4)}, 3, {ease: FlxEase.quadInOut, type: PINGPONG}));
+					windowTween.push(FlxTween.tween(this, {winx: displayX + Std.int(relativeX * 1.5)}, 5, {ease: FlxEase.quadInOut, type: PINGPONG}));
 				case 384:
 					for (tween in windowTween)
 						{
@@ -15925,18 +16052,19 @@ class PlayState extends MusicBeatState
 					scoreTxt.visible = false;
 
 					startresize = true;
+					#if linux Lib.application.window.borderless = true; #end
 					winx = ogwinX;
 					winy = ogwinY;
-					windowTween.push(FlxTween.tween(this, {winy: 0, winx: 0}, 1.6, {ease: FlxEase.expoIn}));
+					windowTween.push(FlxTween.tween(this, {winy: displayY, winx: displayX}, 1.6, {ease: FlxEase.expoIn}));
 					windowTween.push(FlxTween.tween(this, {resizex: fsX, resizey: fsY}, 1.6, {
 						ease: FlxEase.expoIn,
 						onComplete: function(twn:FlxTween)
 						{
 							#if windows CppAPI.setTransparency(Lib.application.window.title, 0x001957); #end
 							startresize = false;
-							Lib.application.window.borderless = false;
+							#if !linux Lib.application.window.borderless = false; #end
 							Lib.application.window.resize(fsX, fsY);
-							Lib.application.window.move(0, 0);
+							Lib.application.window.move(displayX, displayY);
 						}
 					}));
 			}

@@ -1525,7 +1525,11 @@ class MarioSubstate extends MusicBeatSubstate
 			case 'Menu BG':
 				daText = "Change the Main Menu Background or make it random";
 			case 'Enable Mr Virtual Mechanics':
+				#if linux
+				daText = "Let Paranoia move the game window and temporarily\nchange the wallpaper on supported desktops.";
+				#else
 				daText = "Disabling this will remove the extremely weird mechanic\nthat could be annoying for some people, specially when recording";
+				#end
 			case 'Enable Discord Rich Presence':
 				daText = "Enables the Game appearing in your Discord Status";
 		}

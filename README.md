@@ -2,13 +2,13 @@
 
 ## Playing on Linux
 
-Launch the x86-64 game from the project directory.
+For a fresh clone, follow **Building from source** below. Once built, launch the x86-64 game from the project directory.
 
 ```sh
 ./export/release/linux/bin/Mario
 ```
 
-Keep the entire `bin` directory together if you move the game. It contains the executable, the engine's native library, the songs, and the cutscenes. The game uses OpenGL for rendering and VLC 3 for video playback.
+Keep the entire `bin` directory together if you move the game. It contains the executable, the engine's native library, the songs, and the cutscenes. The game uses OpenGL for rendering and VLC 3 for video playback. Haxe is only needed at build time.
 
 ### Building from source
 
@@ -33,7 +33,13 @@ Build and launch the game from the project directory.
 
 The first build downloads the pinned Haxe, Neko, and engine dependencies into `export/linux-tools`. Build on the target distribution to use its C and C++ runtimes. Close the game before rebuilding because Lime rewrites the native library beside the executable.
 
-The Linux version keeps Paranoia's window movement and renders its scene in the game window. Desktop wallpaper changes and hiding other applications are Windows-specific.
+### Paranoia's desktop effects
+
+**Options → Mario Options → Enable Mr Virtual Mechanics** controls Paranoia's moving window and temporary wallpaper. The Linux build uses X11, including Xwayland on a Wayland desktop. During the “TOO LATE” section, the game shows the artwork behind the characters.
+
+On GNOME, the same section changes the actual desktop wallpaper. After about 28 seconds, or if you leave the song early, the game restores your light and dark wallpapers. If you pick another wallpaper during the effect, it keeps your choice. Other desktops show the artwork inside the game.
+
+The GNOME effect uses Python 3 and PyGObject. The package is `python-gobject` on CachyOS and Arch, or `python3-gi` on Debian.
 
 ## Psych Engine
 

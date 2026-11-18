@@ -1,7 +1,23 @@
-import flixel.FlxBasic;
 import flixel.FlxCamera;
-import flixel.FlxG;
 import flixel.FlxState;
+
+#if linux
+class DSVideo extends hxcodec.VideoSprite
+{
+	public var finished:Bool = false;
+
+	public function new(name:String, camera:FlxCamera, state:FlxState)
+	{
+		super();
+		cameras = [camera];
+		bitmap.canSkip = false;
+		finishCallback = function() { finished = true; };
+		playVideo(name);
+	}
+}
+#else
+import flixel.FlxBasic;
+import flixel.FlxG;
 #if web
 import openfl.events.NetStatusEvent;
 import openfl.media.Video;
@@ -162,3 +178,4 @@ class DSVideo extends FlxBasic
 	}
 	#end
 }
+#end

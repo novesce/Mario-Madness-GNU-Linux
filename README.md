@@ -1,4 +1,42 @@
-# Friday Night Funkin' - Psych Engine
+# Friday Night Funkin': Mario's Madness
+
+## Playing on Linux
+
+Launch the x86-64 game from the project directory.
+
+```sh
+./export/release/linux/bin/Mario
+```
+
+Keep the entire `bin` directory together if you move the game. It contains the executable, the engine's native library, the songs, and the cutscenes. The game uses OpenGL for rendering and VLC 3 for video playback.
+
+### Building from source
+
+On CachyOS or Arch, install the compiler and VLC packages.
+
+```sh
+sudo pacman -S --needed base-devel git curl libvlc vlc-plugin-ffmpeg
+```
+
+On Debian 13, install the corresponding build tools and VLC packages.
+
+```sh
+sudo apt install build-essential git curl pkg-config libvlc-dev vlc-plugin-base
+```
+
+Build and launch the game from the project directory.
+
+```sh
+./build-linux.sh
+./export/release/linux/bin/Mario
+```
+
+The first build downloads the pinned Haxe, Neko, and engine dependencies into `export/linux-tools`. Build on the target distribution to use its C and C++ runtimes. Close the game before rebuilding because Lime rewrites the native library beside the executable.
+
+The Linux version keeps Paranoia's window movement and renders its scene in the game window. Desktop wallpaper changes and hiding other applications are Windows-specific.
+
+## Psych Engine
+
 Engine originally used on [Mind Games Mod](https://gamebanana.com/mods/301107), intended to be a fix for the vanilla version's many issues while keeping the casual play aspect of it. Also aiming to be an easier alternative to newbie coders.
 
 ## Installation:

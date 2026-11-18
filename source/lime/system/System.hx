@@ -298,7 +298,7 @@ class System
 			#elseif mac
 			Sys.command("/usr/bin/open", [path]);
 			#elseif linux
-			Sys.command("/usr/bin/xdg-open", [path, "&"]);
+			Sys.command("xdg-open", [path]);
 			#elseif (js && html5)
 			Browser.window.open(path, "_blank");
 			#elseif flash
@@ -526,9 +526,12 @@ class System
 
 	@:noCompletion private static function __registerEntryPoint(projectName:String, entryPoint:Function):Void
 	{
-        #if windows
-        CppAPI.allowHighDPI();
-        #end
+		#if windows
+		CppAPI.allowHighDPI();
+		#elseif (linux && cpp)
+		// OpenFL loads the asset manifests before calling Main.main().
+		Sys.setCwd(haxe.io.Path.directory(Sys.programPath()));
+		#end
 		
 		if (__applicationEntryPoint == null)
 		{

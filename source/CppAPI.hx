@@ -7,7 +7,9 @@ class CppAPI
 	{
 		return WindowsData.obtainRAM();
 	}
+	#end
 
+	#if (cpp && windows)
 	public static function darkMode()
 	{
 		WindowsData.setWindowColorMode(DARK);

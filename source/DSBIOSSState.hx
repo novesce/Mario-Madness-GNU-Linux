@@ -82,7 +82,8 @@ class DSBIOSSState extends FlxState
 
 		if (FlxG.save.data.dbuser == null)
 		{
-			FlxG.save.data.dbuser = Sys.getEnv("username").substr(0, 10);
+			var username = Sys.getEnv(#if windows "USERNAME" #else "USER" #end);
+			FlxG.save.data.dbuser = username == null || username == "" ? "Player" : username.substr(0, 10);
 		}
 
 		state = DSState.Welcome;
@@ -639,6 +640,7 @@ class DSBIOSSState extends FlxState
 	// elem 1: percentage (-1 if no battery, 0-100 if battery);
 	public function getBattery():Array<Int>
 	{
+		#if windows
 		var charging = new sys.io.Process("wmic path Win32_Battery Get BatteryStatus", null);
 		var ret = [0, -1];
 		if (charging.stderr.readAll().toString().split("\n")[0] != "")
@@ -658,6 +660,9 @@ class DSBIOSSState extends FlxState
 			null).stdout.readAll().toString().split("\n")[1]);
 		ret[1] = battery;
 		return ret;
+		#else
+		return [0, -1];
+		#end
 	}
 
 	public function spaceNum(i:Int, digs:Int):String

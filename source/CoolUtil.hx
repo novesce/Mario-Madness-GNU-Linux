@@ -118,11 +118,7 @@ class CoolUtil {
 	}
 
 	public static function browserLoad(site:String) {
-		#if linux
-		Sys.command('/usr/bin/xdg-open', [site, "&"]);
-		#else
 		FlxG.openURL(site);
-		#end
 	}
 
 	public static inline function exactSetGraphicSize(obj:Dynamic, width:Float, height:Float) // ACTULLY WORKS LMAO -lunar

@@ -1513,7 +1513,7 @@ class PlayState extends MusicBeatState
 					add(funnylayer0);
 
 					var vid:VideoSprite = new VideoSprite();
-					vid.playVideo(Paths.video('powerdownscene'));
+					vid.playVideo(Paths.video('Powerdownscene'));
 					vid.cameras = [camHUD];
 					vid.visible = false;
 					add(vid);
@@ -7592,9 +7592,8 @@ class PlayState extends MusicBeatState
 				#end
 			}
 		}
-		else if(FlxG.keys.justPressed.ENTER && inCutscene && cutVid != null && SONG.song.toLowerCase() != 'demise'){
-			finishVideo();
-			cutVid.bitmap.stop();
+		else if(FlxG.keys.justPressed.ENTER && inCutscene && cutVid != null && SONG.song.toLowerCase() != 'demise' && cutVid.bitmap.onEndReached != null){
+			cutVid.bitmap.onEndReached();
 		}
 
 		if (healthDrain > 0)
@@ -11151,7 +11150,7 @@ class PlayState extends MusicBeatState
 						if(ClientPrefs.filtro85) eventTweens.push(FlxTween.tween(estatica, {alpha: 1}, 2.5));
 					case 7:
 						midsongVid.visible = true;
-						midsongVid.playVideo(Paths.video('powerdownscene'));
+						midsongVid.playVideo(Paths.video('Powerdownscene'));
 						midsongVid.finishCallback = function()
 						{
 							midsongVid.visible = false;
@@ -13610,6 +13609,7 @@ class PlayState extends MusicBeatState
 							eventTimers.push(new FlxTimer().start(0.05, function(tmr:FlxTimer)
 							{
 								iconP1.changeIcon('icon-bfvsad');
+								#if windows
 								CppAPI.setOld();
 								var relPath:String = FileSystem.absolutePath("assets\\images\\toolate.bmp");
 								relPath = relPath.replace("/", "\\");
@@ -13617,6 +13617,7 @@ class PlayState extends MusicBeatState
 								CppAPI.hideWindows();
 								virtuabg.alpha = 1;
 								blackBarThingie.alpha = 1;
+								#end
 								crazyFloor.visible = true;
 								clashmario.visible = false;
 								yourhead.visible = true;
@@ -13651,7 +13652,7 @@ class PlayState extends MusicBeatState
 								{
 									tween.cancel();
 								}
-							CppAPI.restoreWindows();
+							#if windows CppAPI.restoreWindows(); #end
 							startresize = true;
 							Lib.application.window.borderless = false;
 
@@ -15742,11 +15743,13 @@ class PlayState extends MusicBeatState
 	{
 		trace('BUT UN C PAPU MISTERIOSO CIERRA EL JUEGO');
 
+		#if windows
 		if (ClientPrefs.noVirtual && curStage == 'virtual')
 		{
 			CppAPI.restoreWindows();
 			CppAPI.setWallpaper('old');
 		}
+		#end
 	}
 
 	private var preventLuaRemove:Bool = false;
@@ -15786,8 +15789,10 @@ class PlayState extends MusicBeatState
 
 				Lib.application.window.resize(PauseSubState.restsizeX, PauseSubState.restsizeY);
 				Lib.application.window.move(PauseSubState.restX, PauseSubState.restY);
+				#if windows
 				CppAPI.restoreWindows();
 				CppAPI.setWallpaper('old');
+				#end
 			}
 
 			FlxG.mouse.load(TitleState.mouse.pixels, 2);
@@ -15927,7 +15932,7 @@ class PlayState extends MusicBeatState
 						ease: FlxEase.expoIn,
 						onComplete: function(twn:FlxTween)
 						{
-							CppAPI.setTransparency(Lib.application.window.title, 0x001957);
+							#if windows CppAPI.setTransparency(Lib.application.window.title, 0x001957); #end
 							startresize = false;
 							Lib.application.window.borderless = false;
 							Lib.application.window.resize(fsX, fsY);

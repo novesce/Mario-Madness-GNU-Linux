@@ -1,3 +1,14 @@
+#if linux
+class FlxVideo extends hxcodec.VideoHandler
+{
+	public function new(name:String)
+	{
+		super();
+		canSkip = false;
+		playVideo(name);
+	}
+}
+#else
 #if web
 import openfl.events.NetStatusEvent;
 import openfl.media.Video;
@@ -142,3 +153,4 @@ class FlxVideo extends FlxBasic
 	#end
 	#end
 }
+#end

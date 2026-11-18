@@ -236,9 +236,8 @@ class StoryMenuState extends MusicBeatSubstate
 		{
 			selectWeek();
 		}
-		else if(controls.ACCEPT && inCutscene){
-			finishVideo();
-			vid.bitmap.stop();
+		else if(controls.ACCEPT && inCutscene && vid.bitmap.onEndReached != null){
+			vid.bitmap.onEndReached();
 		}
 
 		charsShader.update(elapsed);
@@ -412,7 +411,9 @@ class StoryMenuState extends MusicBeatSubstate
 		}
 
 	public function finishVideo():Void{
+		inCutscene = false;
 		FlxG.camera.filtersEnabled = true;
+		remove(vid);
 		vid.destroy();
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 			{

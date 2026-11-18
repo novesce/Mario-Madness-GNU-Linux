@@ -5,6 +5,10 @@ import discord_rpc.DiscordRpc;
 
 using StringTools;
 
+#if linux
+// GCC 15+ also checks unused templates in Discord RPC's RapidJSON 1.1 headers.
+@:buildXml("<files id='native-discord-rpc'><compilerflag value='-Wno-template-body'/></files>")
+#end
 class DiscordClient
 {
 	public function new()

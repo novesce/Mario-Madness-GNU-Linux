@@ -21,6 +21,10 @@ import java.vm.Gc;
 import neko.vm.Gc;
 #end
 
+#if (linux && cpp)
+// hxcpp loads lime.ndll while initializing static fields, before Main.main().
+@:buildXml("<target id='haxe'><flag value='-Wl,-rpath,$ORIGIN'/></target>")
+#end
 class Main extends Sprite {
 	public static var initialState:Class<FlxState> = TitleState; // The FlxState the game starts with.
 	public static var gameWidth:Int = initialState == TitleState ? 921 : 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
